@@ -24,20 +24,27 @@ struct Tree
 {
    Node<T> *root;
    Tree();
+
+   //all traversals
    void preorder(Node<T>*);
    void inorder(Node<T>*);
-   void reverseInorder(Node<T>*);
    void postorder(Node<T>*);
-   int height(Node<T>*);
-   int SIZE(Node<T>*);
-   int sizeWithRecursion(Node<T>*);
-   int diameter(Node<T>*);
    void levelOrder(Node<T>*);
+   void reverseInorder(Node<T>*);
+
+   // paramters of tree
+   int height(Node<T>*);
+   int diameter(Node<T>*);
    int width(Node<T>*);
+   int sizeWithRecursion(Node<T>*);
+   int SIZE(Node<T>*);
    T maximum(Node<T>*);
    T minimum(Node<T>*);
+
+   //print views
    void printLeftView(Node<T>*,int,T []);
-   void printAncestors(Node<T>*,Node<T>*,bool);
+   void printAncestors(Node<T>*,Node<T>*,int);
+   void printNodesAtK(Node<T>*,int k);
 };
 
 template<class T>
@@ -55,18 +62,6 @@ void Tree<T>::inorder(Node<T> *r){
    cout<<r->data<<" ";
    inorder(r->right);
 }
-
-template<class T>
-void Tree<T>::reverseInorder(Node<T> *r){
-   if(r == NULL){
-       return;
-   }
-
-   inorder(r->right);
-   cout<<r->data<<" ";
-   inorder(r->left);
-}
-
 
 template<class T>
 void Tree<T>::preorder(Node<T> *r){
@@ -88,7 +83,7 @@ void Tree<T>::postorder(Node<T> *r){
 
    postorder(r->left);
    postorder(r->right);
-  cout<<r->data<<" ";
+   cout<<r->data<<" ";
 }
 
 template<class T>
@@ -111,37 +106,16 @@ void Tree<T>::levelOrder(Node<T> *r){
   }
 }
 
-template<class T>
-int Tree<T>::SIZE(Node<T> *r){
-  if(r == NULL)
-  return 0;
-
-  queue<Node<T>*>q;
-  q.push(r);
-  int count = 0;
-  while(!q.empty()){
-      Node<T> *temp = q.front();
-      count++;
-      q.pop();
-     
-      if(temp->left)
-      q.push(temp->left);
-
-      if(temp->right)
-      q.push(temp->right);
-  }
-  return count;
-}
 
 template<class T>
-int Tree<T>::sizeWithRecursion(Node<T> *r){
-  if(r == NULL)
-  return 0;
- 
-  int left_size = sizeWithRecursion(r->left);
-  int right_size = sizeWithRecursion(r->right);
+void Tree<T>::reverseInorder(Node<T> *r){
+   if(r == NULL){
+       return;
+   }
 
-  return left_size + right_size + 1;
+   inorder(r->right);
+   cout<<r->data<<" ";
+   inorder(r->left);
 }
 
 template<class T>
@@ -151,6 +125,18 @@ int Tree<T>::height(Node<T> *r){
 
   return 1+max(height(r->left),height(r->right));
 }
+
+template<class T>
+int Tree<T>::diameter(Node<T> *r){
+   if(r == NULL)
+   return 0;
+
+   int left_diameter = diameter(r->left);
+   int right_diameter = diameter(r->right);
+
+   return max(1+height(r->left) + height(r->right),max(left_diameter,right_diameter));
+}
+
 
 template<class T>
 int Tree<T>::width(Node<T> *r){
@@ -186,15 +172,101 @@ int Tree<T>::width(Node<T> *r){
  return max_count;
 }
 
+
 template<class T>
-int Tree<T>::diameter(Node<T> *r){
+int Tree<T>::SIZE(Node<T> *r){
+  if(r == NULL)
+  return 0;
+
+  queue<Node<T>*>q;
+  q.push(r);
+  int count = 0;
+  while(!q.empty()){
+      Node<T> *temp = q.front();
+      count++;
+      q.pop();
+     
+      if(temp->left)
+      q.push(temp->left);
+
+      if(temp->right)
+      q.push(temp->right);
+  }
+  return count;
+}
+
+template<class T>
+int Tree<T>::sizeWithRecursion(Node<T> *r){
+  if(r == NULL)
+  return 0;
+ 
+  int left_size = sizeWithRecursion(r->left);
+  int right_size = sizeWithRecursion(r->right);
+
+  return left_size + right_size + 1;
+}
+
+template<class T>
+T Tree<T>::maximum(Node<T> *r){
+   if(r == NULL){
+       return '!';
+   }
+  
+   if(r->left == NULL && r->right == NULL)
+      return r->data;
+
+   T max_left = maximum(r->left);
+   T max_right = maximum(r->right);
+
+   return max(r->data,max(max_left,max_right));
+}
+
+template<class T>
+T Tree<T>::minimum(Node<T> *r){
+   if(r == NULL){
+       return '!';
+   }
+  
+   if(r->left == NULL && r->right == NULL)
+      return r->data;
+
+   T min_left = minimum(r->left);
+   T min_right = minimum(r->right);
+
+   return min(r->data,min(min_left,min_right));
+}
+
+template<class T>
+void Tree<T>::printLeftView(Node<T> *r,int height,T arr[100]){
    if(r == NULL)
-   return 0;
+   return;
 
-   int left_diameter = diameter(r->left);
-   int right_diameter = diameter(r->right);
+   if(arr[height] == -1){
+       arr[height] = r->data;
+       cout<<arr[height]<<" ";
+   }
 
-   return max(1+height(r->left) + height(r->right),max(left_diameter,right_diameter));
+   printLeftView(r->left,height+1,arr);
+   printLeftView(r->right,height+1,arr);
+}
+
+template<class T>
+void Tree<T>::printAncestors(Node<T> *r,Node<T> *req,bool flag){
+  
+  if(r == NULL){
+      cout<<"3"<<endl;
+      return;
+  }
+
+  if(r == req){
+      cout<<"1"<<endl;
+      flag = true;
+      return;
+  }
+
+  printAncestors(r->left,req,flag);
+  printAncestors(r->right,req,flag);
+
 }
 
 template<class T>
@@ -240,70 +312,18 @@ void reverseInorderWithoutRecursion(Node<T> *r){
 }
 
 template<class T>
-T Tree<T>::maximum(Node<T> *r){
-   if(r == NULL){
-       return INT_MIN;
-   }
-  
-   if(r->left == NULL && r->right == NULL)
-      return r->data;
+void Tree<T>::printNodesAtK(Node<T> *r,int k){
+    if(r == NULL)
+    return;
 
-   T max_left = maximum(r->left);
-   T max_right = maximum(r->right);
+    if(k == 0){
+    cout<<r->data<<" ";
+    return;
+    }
 
-   return max(r->data,max(max_left,max_right));
+    printNodesAtK(r->left,k-1);
+    printNodesAtK(r->right,k-1);
 }
-
-template<class T>
-T Tree<T>::minimum(Node<T> *r){
-   if(r == NULL){
-       return INT_MAX;
-   }
-  
-   if(r->left == NULL && r->right == NULL)
-      return r->data;
-
-   T min_left = minimum(r->left);
-   T min_right = minimum(r->right);
-
-   return min(r->data,min(min_left,min_right));
-}
-
-template<class T>
-void Tree<T>::printLeftView(Node<T> *r,int height,T arr[100]){
-   if(r == NULL)
-   return;
-
-   if(arr[height] == -1){
-       arr[height] = r->data;
-       cout<<arr[height]<<" ";
-   }
-
-   printLeftView(r->left,height+1,arr);
-   printLeftView(r->right,height+1,arr);
-}
-
-template<class T>
-void Tree<T>::printAncestors(Node<T> *r,Node<T> *req,bool flag){
-  if(r == NULL){
-      return;
-  }
-
-  printAncestors(r->left,req,flag);
-  printAncestors(r->right,req,flag);
-
-   
-  if(r == req){
-      flag = true;
-      return;
-  }
-
-  if(flag){
-      cout<<r->data<<" ";
-      return;
-  }
-}
-
 
 int main()
 {
@@ -322,41 +342,36 @@ int main()
   Node<char> *root = new Node<char>('a');
    root->left = new Node<char>('b');
    root->right = new Node<char>('c');
-   root->right->left = new Node<char>('d');
-   root->right->right = new Node<char>('e');
-   root->left->left = new Node<char>('g');
-   root->left->right = new Node<char>('h');
-//    cout<<root->data<<"\n";
-//    cout<<root->left->data<<"\n";
-//    cout<<root->right->data<<"\n";
-//    cout<<l1->data<<"\n";
-//    cout<<r1->data<<"\n";
-//    cout<<l2->data<<"\n";
-  Tree<char> *t = new Tree<char>();
-//    t->inorder(root);
-//    cout<<endl;
-//    t->preorder(root);
-//    cout<<endl;
-//    t->postorder(root);
-//    cout<<endl;
-//    t->levelOrder(root);
-//    cout<<endl;
-//    cout<<t->maximum(root);
-//    cout<<endl;
-//    cout<<t->minimum(root);
-//    cout<<endl;
-//    cout<<t->sizeWithRecursion(root);
-//    cout<<endl;
-//    cout<<t->height(root)<<"\n";
-//    cout<<t->diameter(root)<<"\n";
-//    reverseInorderWithoutRecursion(root);
-//    cout<<endl;
-//    char arr[100];
-//    for(int i=0;i<100;i++){
-//        arr[i] = -1;
-//    }
-//    t->printLeftView(root,0,arr);
-cout<<t->width(root)<<"\n";
+   root->left->left = new Node<char>('d');
+   root->left->right = new Node<char>('e');
+   root->right->left = new Node<char>('f');
+   root->right->right = new Node<char>('g');
+   Tree<char> *t = new Tree<char>();
+   t->inorder(root);
+   cout<<endl;
+   t->preorder(root);
+   cout<<endl;
+   t->postorder(root);
+   cout<<endl;
+   t->levelOrder(root);
+   cout<<endl;
+   cout<<t->maximum(root);
+   cout<<endl;
+   cout<<t->minimum(root);
+   cout<<endl;
+   cout<<t->sizeWithRecursion(root);
+   cout<<endl;
+   cout<<t->height(root)<<"\n";
+   cout<<t->diameter(root)<<"\n";
+   reverseInorderWithoutRecursion(root);
+   cout<<endl;
+   char arr[100];
+   for(int i=0;i<100;i++){
+       arr[i] = -1;
+   }
+   //t->printLeftView(root,0,arr);
+   t->printNodesAtK(root,1);
+   t->printAncestors(root,root->left,false);
 
   return 0;
 }
