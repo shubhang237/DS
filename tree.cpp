@@ -1,7 +1,9 @@
 #include<iostream>
 #include<climits>
 #include<stack>
+#include<string>
 #include<queue>
+#include<map>
 using namespace std;
 
 template<class T>
@@ -9,6 +11,7 @@ struct Node{
    T data;
    Node<T> *left;
    Node<T> *right;
+   Node<T> *next;
    Node(T);
 };
 
@@ -16,6 +19,7 @@ template<class T>
 Node<T>::Node(T x){
    left = NULL;
    right = NULL;
+   next = NULL;
    data = x;
 }
 
@@ -40,11 +44,14 @@ struct Tree
    int SIZE(Node<T>*);
    T maximum(Node<T>*);
    T minimum(Node<T>*);
+   int maxWidthAtLevel(Node<T>*,int);
+   Node<T>* getLCA(Node<T>*,T,T);
 
    //print views
    void printLeftView(Node<T>*,int,T []);
-   void printAncestors(Node<T>*,Node<T>*,int);
    void printNodesAtK(Node<T>*,int k);
+   void printZigZag(Node<T>*);
+   void connectNodesAtSameLevel(Node<T>*);
 };
 
 template<class T>
@@ -97,13 +104,39 @@ void Tree<T>::levelOrder(Node<T> *r){
       Node<T> *temp = q.front();
       cout<<temp->data<<" ";
       q.pop();
-     
-      if(temp->left)
-      q.push(temp->left);
-
-      if(temp->right)
-      q.push(temp->right);
+   }
+}
+ 
+/* Function to traverse binary tree without recursion and 
+   without stack */
+template<class T>
+void MorrisTraversal(Node<T> *r)
+{
+  Node<T> *pre,*curr = r;
+  while(curr != NULL){
+      if(curr->left == NULL){
+          cout<<curr->data<<" ";
+          curr = curr->right;
+      }
+      else
+      {
+          pre = curr->left;
+          while(pre->right != NULL && pre->right != curr)
+                pre = pre->right;
+    
+              if(pre->right == NULL){
+                  pre->right = curr;
+                  curr = curr->left;
+              }
+              else
+              {
+                 pre->right = NULL;
+                 cout<<curr->data<<" ";
+                 curr = curr->right;
+              }
+      }
   }
+  
 }
 
 
@@ -133,43 +166,59 @@ int Tree<T>::diameter(Node<T> *r){
 
    int left_diameter = diameter(r->left);
    int right_diameter = diameter(r->right);
-
    return max(1+height(r->left) + height(r->right),max(left_diameter,right_diameter));
 }
 
+template<class T>
+int Tree<T>::maxWidthAtLevel(Node<T> *r,int level){
+    if(r == NULL)
+    return 0;
+    
+    if(level == 1)
+    return 1;
+
+    return maxWidthAtLevel(r->left,level-1)+maxWidthAtLevel(r->right,level-1);
+}
 
 template<class T>
 int Tree<T>::width(Node<T> *r){
+
+// level order traversal using queue
   if(r == NULL)
   return 0;
 
   queue<Node<T>*> q;
   q.push(r);
   int count = 0;
-  int i = 0;
   int max_count = INT_MIN;
   while(!q.empty()){
+
+      count = q.size(); 
+      max_count = max(max_count,count);
+
+    while(count--){   
       Node<T> *temp = q.front();
       q.pop();
-      i++;
 
-      if(i == count){
-          max_count = max(max_count,count);
-          i=0;
-          count=0;
-      }
-     
       if(temp->left){
         q.push(temp->left);
-        count++;
       }
 
       if(temp->right){
           q.push(temp->right);
-          count++;
       }
+    }
   }
+
  return max_count;
+   
+   //recursive width approach
+    // int h = height(r);
+    // int max_width = INT_MIN;
+    // for(int i=1;i<=h;i++){
+    //     max_width = max(max_width,maxWidthAtLevel(r,i));
+    // }
+    // return max_width;
 }
 
 
@@ -251,25 +300,6 @@ void Tree<T>::printLeftView(Node<T> *r,int height,T arr[100]){
 }
 
 template<class T>
-void Tree<T>::printAncestors(Node<T> *r,Node<T> *req,bool flag){
-  
-  if(r == NULL){
-      cout<<"3"<<endl;
-      return;
-  }
-
-  if(r == req){
-      cout<<"1"<<endl;
-      flag = true;
-      return;
-  }
-
-  printAncestors(r->left,req,flag);
-  printAncestors(r->right,req,flag);
-
-}
-
-template<class T>
 void inorderWithoutRecursion(Node<T> *r){
    stack<Node<T>*> s;
    s.push(r);
@@ -325,6 +355,101 @@ void Tree<T>::printNodesAtK(Node<T> *r,int k){
     printNodesAtK(r->right,k-1);
 }
 
+template<class T>
+void Tree<T>::printZigZag(Node<T> *r){
+    if(r == NULL)
+    return;
+
+    int count = 0;
+    queue<Node<T>*> q;
+    q.push(r);
+    int i = 0;
+    while(!q.empty()){
+       vector<Node<T>*> vc;        
+       count = q.size();  
+          while(count--){
+              Node<T> *temp = q.front();
+              vc.push_back(temp);
+              q.pop();
+
+              if(temp->left)
+              q.push(temp->left);
+
+
+              if(temp->right)
+              q.push(temp->right);
+
+          }
+
+          if(i%2 == 0){
+            for(int j=0;j<vc.size();j++){
+                cout<<vc[j]->data<<" ";
+            }
+          }
+          else
+          {
+             for(int j=vc.size()-1;j>=0;j--){
+                cout<<vc[j]->data<<" ";
+            }
+          }
+          i++;
+    }
+
+}
+
+
+template<class T>
+void Tree<T>::connectNodesAtSameLevel(Node<T> *r){
+    if(r == NULL)
+    return ;
+
+    int count = 0;
+    queue<Node<T>*>q;
+    q.push(r);
+    while(!q.empty()){
+        count = q.size();
+        int i = 0;
+        //vector<Node<T>*> vc;
+        Node<T> *temp;
+        while(count--){
+           if(i > 0){
+               temp->next = q.front();
+           }
+           temp = q.front();
+        //    vc.push_back(temp);
+           q.pop();
+
+           if(temp->left)
+           q.push(temp->left);
+
+           if(temp->right)
+           q.push(temp->right);
+           i++;
+        }
+        // for(int i=1;i<vc.size();i++){
+        //     vc[i-1]->next = vc[i];
+        // }
+    }
+}
+
+template<class T>
+Node<T>* Tree<T>::getLCA(Node<T> *r,T key1,T key2){
+    if(r == NULL)
+    return r;
+
+    if(key1 == r->data || key2 == r->data)
+    return r;
+
+    Node<T> *left_ans = getLCA(r->left,key1,key2);
+    Node<T> *right_ans = getLCA(r->right,key1,key2);
+    
+    if(left_ans && right_ans)
+        return r;
+
+    return left_ans != NULL ? left_ans : right_ans;
+}
+
+
 int main()
 {
 //    Node<int> *root = new Node<int>();
@@ -346,33 +471,45 @@ int main()
    root->left->right = new Node<char>('e');
    root->right->left = new Node<char>('f');
    root->right->right = new Node<char>('g');
-   Tree<char> *t = new Tree<char>();
-   t->inorder(root);
-   cout<<endl;
-   t->preorder(root);
-   cout<<endl;
-   t->postorder(root);
-   cout<<endl;
-   t->levelOrder(root);
-   cout<<endl;
-   cout<<t->maximum(root);
-   cout<<endl;
-   cout<<t->minimum(root);
-   cout<<endl;
-   cout<<t->sizeWithRecursion(root);
-   cout<<endl;
-   cout<<t->height(root)<<"\n";
-   cout<<t->diameter(root)<<"\n";
-   reverseInorderWithoutRecursion(root);
-   cout<<endl;
-   char arr[100];
-   for(int i=0;i<100;i++){
-       arr[i] = -1;
-   }
-   //t->printLeftView(root,0,arr);
-   t->printNodesAtK(root,1);
-   t->printAncestors(root,root->left,false);
-
+    Tree<char> *t = new Tree<char>();
+    t->inorder(root);
+//    cout<<endl;
+//    t->preorder(root);
+//    cout<<endl;
+//    t->postorder(root);
+//    cout<<endl;
+//    t->levelOrder(root);
+//    cout<<endl;
+//    cout<<t->maximum(root);
+//    cout<<endl;
+//    cout<<t->minimum(root);
+//    cout<<endl;
+//    cout<<t->sizeWithRecursion(root);
+//    cout<<endl;
+//    cout<<t->height(root)<<"\n";
+//    cout<<t->diameter(root)<<"\n";
+//    reverseInorderWithoutRecursion(root);
+//    cout<<endl;
+//    char arr[100];
+//    for(int i=0;i<100;i++){
+//        arr[i] = -1;
+//    }
+//    //t->printLeftView(root,0,arr);
+//    t->printNodesAtK(root,1);
+Node<char> *ans = t->getLCA(root,'d','f');
+cout<<endl;
+cout<<ans->data<<"\n";
+//cout<<t->width(root)<<endl;
+MorrisTraversal(root);
+cout<<endl;
+t->printZigZag(root);
+t->connectNodesAtSameLevel(root);
+cout<<endl;
+Node<char> *temp = root->left;
+while(temp){
+    cout<<temp->data<<" ";
+    temp = temp->next;
+}
   return 0;
 }
 
