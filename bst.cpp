@@ -1,4 +1,5 @@
 #include<iostream>
+#include<vector>
 #include<climits>
 using namespace std;
 
@@ -200,24 +201,91 @@ T InorderPredecessorKey(Node<T> *r,T data,T ans){
       }
 }
 
+template<class T>
+void prepareInorder(Node<T> *r,vector<Node<T>*> *list){
+    if(r == NULL)
+    return;
+
+   prepareInorder(r->left,list);
+   list->push_back(r);
+  // cout<<r->data<<" ";
+   //cout<<(*list)[list->size()-1]->data<<" ";
+   prepareInorder(r->right,list); 
+}
+
+template<class T>
+T smallestKNode(Node<T> *r,int k){
+   if(r == NULL)
+   return -1;
+
+   vector<Node<T>*> *inorder = new vector<Node<T>*>();
+   prepareInorder(r,inorder);
+   //cout<<(*inorder).size()<<endl;
+   if(k > (*inorder).size())
+   return -1;
+
+   return (*inorder)[k-1]->data;  
+}
+
+template<class T>
+void mergeBst(Node<T> *r1,Node<T> *r2){
+    if(r1 == NULL && r2 == NULL)
+    return;
+
+    if(r1 == NULL){
+        mergeBst(r1,r2->left);
+        mergeBst(r1,r2->right);
+        return;
+    }
+    
+    if(r2 == NULL){
+        mergeBst(r1->left,r2);
+        mergeBst(r1->right,r2);
+        return;
+    }
+
+    if(r1->data < r2->data){
+       cout<<r1->data<<" ";
+       mergeBst(r1->left,r2);
+       mergeBst(r1->right,r2);
+    }
+    else
+    {
+       cout<<r2->data<<" ";
+       mergeBst(r1,r2->left);
+       mergeBst(r1,r2->right); 
+    }
+}
+
 int main(){
     Tree<int> *t = new Tree<int>();
-    Node<int> *root = NULL;
-    root = t->insert(root,10);
-    root = t->insert(root,5);
-    root = t->insert(root,20);
-    root = t->insert(root,15);
-    root = t->insert(root,18);
-    root = t->insert(root,12);
-    root = t->insert(root,25);
-    root = t->insert(root,30);
-     t->inorder(root);
-    cout<<endl<<t->search(root,12);
-    cout<<endl<<t->minE(root);
-    root = t->DeleteNode(root,root->right->left->right);
-    cout<<"\n";
-    t->inorder(root);
-    cout<<endl<<InorderSuccesorKey(root,25,-1);
-    cout<<endl<<InorderPredecessorKey(root,5,-1);
+    Node<int> *r1 = NULL;
+    r1 = t->insert(r1,4);
+    r1 = t->insert(r1,2);
+    r1 = t->insert(r1,6);
+    Node<int> *r2 = NULL;
+    r2 = t->insert(r2,3);
+    r2 = t->insert(r2,1);
+    r2 = t->insert(r2,5);
+    mergeBst(r1,r2);
+    // root = t->insert(root,10);
+    // root = t->insert(root,5);
+    // root = t->insert(root,20);
+    // root = t->insert(root,15);
+    // root = t->insert(root,18);
+    // root = t->insert(root,12);
+    // root = t->insert(root,25);
+    // root = t->insert(root,30);
+    // cout<<smallestKNode(root,8)<<"\n";
+    // t->inorder(root);
+    // cout<<endl;
+    // cout<<t->search(root,12)<<endl;
+    // cout<<t->minE(root)<<endl;
+    // root = t->DeleteNode(root,root->right->left->right);
+    // t->inorder(root);
+    // cout<<endl;
+    // cout<<InorderSuccesorKey(root,25,-1)<<endl;
+    // cout<<InorderPredecessorKey(root,5,-1);
+    
     return 0;
 }
